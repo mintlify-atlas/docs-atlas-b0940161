@@ -1,0 +1,188 @@
+---
+title: Orders API
+description: Create and manage restaurant orders
+---
+
+## Create Order
+
+<api-endpoint method="POST" path="/api/orders" />
+
+Creates a new order and automatically generates tasks for each kitchen station based on the products ordered.
+
+### Request Body
+
+<ParamField body="tableNumber" type="string" required>
+  The table number for the order. Cannot be null or empty.
+</ParamField>
+
+<ParamField body="products" type="array" required>
+  List of products in the order. Each product must include name and type.
+  
+  <Expandable title="Product Object">
+    <ParamField body="name" type="string" required>
+      Name of the product (e.g., "Caesar Salad", "Coffee")
+    </ParamField>
+    
+    <ParamField body="type" type="string" required>
+      Product type that determines which station will prepare it. Valid values:
+      - `BEVERAGE` - Routed to BAR station
+      - `HOT_FOOD` - Routed to HOT_KITCHEN station
+      - `COLD_FOOD` - Routed to COLD_KITCHEN station
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+### Response
+
+<ResponseField name="tableNumber" type="string">
+  The table number from the request
+</ResponseField>
+
+<ResponseField name="tasksCreated" type="integer">
+  Number of tasks created for this order (one per station with products)
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Success message: "Order processed successfully"
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X POST http://localhost:8080/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tableNumber": "5",
+    "products": [
+      {
+        "name": "Caesar Salad",
+        "type": "COLD_FOOD"
+      },
+      {
+        "name": "Grilled Chicken",
+        "type": "HOT_FOOD"
+      },
+      {
+        "name": "Coffee",
+        "type": "BEVERAGE"
+      }
+    ]
+  }'
+```
+
+### Example Response
+
+```json
+{
+  "tableNumber": "5",
+  "tasksCreated": 3,
+  "message": "Order processed successfully"
+}
+```
+
+### Error Responses
+
+**400 Bad Request - Missing Table Number:**
+```json
+{
+  "error": "Table number cannot be null or empty",
+  "message": "Validation failed",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 400
+}
+```
+
+**400 Bad Request - Empty Products:**
+```json
+{
+  "error": "Products list cannot be null or empty",
+  "message": "Validation failed",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 400
+}
+```
+
+**400 Bad Request - Invalid Product Type:**
+```json
+{
+  "error": "Invalid product type: INVALID_TYPE",
+  "message": "Validation failed",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 400
+}
+```
+
+---
+
+## Get Order Status
+
+<api-endpoint method="GET" path="/api/orders/{orderId}/status" />
+
+Retrieves the current status of an order by its ID.
+
+### Path Parameters
+
+<ParamField path="orderId" type="long" required>
+  The unique identifier of the order
+</ParamField>
+
+### Response
+
+<ResponseField name="orderId" type="string">
+  The order ID from the request
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current status of the order. Possible values:
+  - `PENDING` - Order tasks are waiting to start
+  - `IN_PREPARATION` - At least one task is being prepared
+  - `COMPLETED` - All tasks are completed
+</ResponseField>
+
+### Example Request
+
+```bash
+curl http://localhost:8080/api/orders/1/status
+```
+
+### Example Response
+
+```json
+{
+  "orderId": "1",
+  "status": "IN_PREPARATION"
+}
+```
+
+### Error Responses
+
+**404 Not Found:**
+```json
+{
+  "error": "Order with id 999 not found",
+  "message": "Order not found",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 404
+}
+```
+
+---
+
+## Order Processing Flow
+
+When an order is created, the system:
+
+1. Validates the table number and products list
+2. Groups products by their type (station assignment)
+3. Creates one task per station that has products
+4. Returns the number of tasks created
+
+Each task is initially in `PENDING` status and must be started by a kitchen station.
+
+## Product Types and Station Mapping
+
+| Product Type | Station | Example Products |
+|--------------|---------|------------------|
+| `BEVERAGE` | BAR | Coffee, Tea, Juice, Cocktails |
+| `HOT_FOOD` | HOT_KITCHEN | Grilled items, Pasta, Steak |
+| `COLD_FOOD` | COLD_KITCHEN | Salads, Desserts, Cold appetizers |

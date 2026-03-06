@@ -1,0 +1,588 @@
+---
+title: Installation
+description: Set up the FoodTech Kitchen Service on your local machine
+---
+
+This guide will walk you through installing and running the FoodTech Kitchen Service. The service is built with Spring Boot 3.2.1, Java 17, and uses Gradle 8.5 for build management.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+<CardGroup cols={3}>
+  <Card title="Java 17+" icon="mug-hot">
+    Java Development Kit 17 or higher required
+  </Card>
+  <Card title="Gradle 8.5" icon="cubes">
+    Build tool (wrapper included in repo)
+  </Card>
+  <Card title="Git" icon="code-branch">
+    Version control for cloning the repository
+  </Card>
+</CardGroup>
+
+<Note>
+The project includes a Gradle wrapper (`./gradlew`), so you don't need to install Gradle separately. The wrapper will automatically download the correct version.
+</Note>
+
+### Verify Java Installation
+
+Check that Java 17 or higher is installed:
+
+```bash
+java -version
+```
+
+Expected output:
+```plaintext
+openjdk version "17.0.9" 2023-10-17
+OpenJDK Runtime Environment (build 17.0.9+9)
+OpenJDK 64-Bit Server VM (build 17.0.9+9, mixed mode, sharing)
+```
+
+<Warning>
+If you have multiple Java versions installed, make sure Java 17+ is set as your `JAVA_HOME`:
+```bash
+export JAVA_HOME=/path/to/java17
+export PATH=$JAVA_HOME/bin:$PATH
+```
+</Warning>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the repository">
+    Clone the FoodTech Kitchen Service repository to your local machine:
+
+    ```bash
+    git clone <repository-url>
+    cd FoodTech
+    ```
+
+    The project structure follows hexagonal architecture:
+    ```plaintext
+    FoodTech/
+    ├── src/
+    │   ├── main/java/com/foodtech/kitchen/
+    │   │   ├── domain/          # Core business logic
+    │   │   ├── application/     # Use cases and ports
+    │   │   └── infrastructure/  # Adapters (REST, JPA, Config)
+    │   └── test/                # Unit and integration tests
+    ├── build.gradle             # Build configuration
+    └── gradle/                  # Gradle wrapper files
+    ```
+  </Step>
+
+  <Step title="Build the project">
+    Use the Gradle wrapper to build the project and download all dependencies:
+
+    <CodeGroup>
+      ```bash Linux/Mac
+      # Make gradlew executable (first time only)
+      chmod +x ./gradlew
+
+      # Build the project
+      ./gradlew clean build
+      ```
+
+      ```bash Windows
+      # Build the project
+      gradlew.bat clean build
+      ```
+    </CodeGroup>
+
+    This will:
+    - Download all Maven dependencies defined in `build.gradle:28-56`
+    - Compile the Java source code
+    - Run all unit and integration tests
+    - Generate a JAR file in `build/libs/`
+
+    <Note>
+    The first build may take a few minutes as Gradle downloads dependencies. Subsequent builds will be faster due to caching.
+    </Note>
+  </Step>
+
+  <Step title="Run the tests (optional)">
+    Verify everything is working correctly by running the test suite:
+
+    ```bash
+    ./gradlew test
+    ```
+
+    Expected output:
+    ```plaintext
+    BUILD SUCCESSFUL in 15s
+    66 tests completed
+    0 failed
+
+    Test Summary:
+    ✅ Domain Tests: 15 passing
+    ✅ Application Tests: 8 passing  
+    ✅ Infrastructure Tests: 21 passing
+    ✅ Integration Tests: 22 passing
+    ```
+
+    To generate a test coverage report:
+    ```bash
+    ./gradlew test jacocoTestReport
+    ```
+
+    View the HTML report:
+    ```bash
+    open build/reports/tests/test/index.html        # Mac
+    xdg-open build/reports/tests/test/index.html    # Linux
+    start build/reports/tests/test/index.html       # Windows
+    ```
+  </Step>
+
+  <Step title="Run the application">
+    Start the FoodTech Kitchen Service:
+
+    <CodeGroup>
+      ```bash Gradle Run
+      # Start with Gradle (recommended for development)
+      ./gradlew bootRun
+      ```
+
+      ```bash Java JAR
+      # Build JAR first
+      ./gradlew build
+
+      # Run the JAR directly
+      java -jar build/libs/kitchen-service-0.0.1-SNAPSHOT.jar
+      ```
+
+      ```bash With Custom Port
+      # Run on a different port
+      SERVER_PORT=9090 ./gradlew bootRun
+
+      # Or with JAR
+      java -jar build/libs/kitchen-service-0.0.1-SNAPSHOT.jar --server.port=9090
+      ```
+    </CodeGroup>
+
+    You should see Spring Boot startup logs:
+    ```plaintext
+      .   ____          _            __ _ _
+     /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+    ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+     \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+      '  |____| .__|_| |_|_| |_\__, | / / / /
+     =========|_|==============|___/=/_/_/_/
+     :: Spring Boot ::                (v3.2.1)
+
+    2026-01-15 10:30:00 INFO  KitchenServiceApplication - Starting KitchenServiceApplication
+    2026-01-15 10:30:02 INFO  KitchenServiceApplication - Started KitchenServiceApplication in 2.3 seconds
+    ```
+  </Step>
+
+  <Step title="Verify the installation">
+    Test that the service is running by creating a simple order:
+
+    ```bash
+    curl -X POST http://localhost:8080/api/orders \
+      -H "Content-Type: application/json" \
+      -d '{
+        "tableNumber": "TEST-1",
+        "products": [
+          {"name": "Water", "type": "DRINK"}
+        ]
+      }'
+    ```
+
+    Expected response:
+    ```json
+    {
+      "tableNumber": "TEST-1",
+      "tasksCreated": 1,
+      "message": "Order processed successfully"
+    }
+    ```
+
+    <Note>
+    ✅ If you see this response, the installation is complete and the service is working correctly!
+    </Note>
+  </Step>
+</Steps>
+
+## Project Dependencies
+
+The FoodTech Kitchen Service uses the following key dependencies defined in `build.gradle`:
+
+### Core Framework
+
+```gradle
+// Spring Boot Starters
+implementation 'org.springframework.boot:spring-boot-starter-web'
+implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+implementation 'org.springframework.boot:spring-boot-starter-security'
+```
+
+<CardGroup cols={3}>
+  <Card title="spring-boot-starter-web" icon="globe">
+    REST API endpoints with embedded Tomcat server
+  </Card>
+  <Card title="spring-boot-starter-data-jpa" icon="database">
+    JPA repositories and H2 in-memory database
+  </Card>
+  <Card title="spring-boot-starter-security" icon="shield">
+    Security configuration and CORS headers
+  </Card>
+</CardGroup>
+
+### Additional Libraries
+
+```gradle
+// JSON serialization
+implementation 'com.fasterxml.jackson.core:jackson-databind'
+implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+// Reactive programming (optional)
+implementation 'io.projectreactor:reactor-core:3.6.0'
+
+// Database
+runtimeOnly 'com.h2database:h2'
+
+// Code generation
+compileOnly 'org.projectlombok:lombok'
+annotationProcessor 'org.projectlombok:lombok'
+```
+
+### Testing
+
+```gradle
+testImplementation 'org.springframework.boot:spring-boot-starter-test'
+testImplementation 'org.springframework.security:spring-security-test'
+testImplementation 'io.projectreactor:reactor-test'
+```
+
+## Configuration
+
+The service is configured through `src/main/resources/application.yaml`. Here are the key settings:
+
+### Default Configuration
+
+```yaml
+server:
+  port: 8080
+
+spring:
+  application:
+    name: foodtech-kitchen-service
+  
+  datasource:
+    url: jdbc:h2:mem:kitchendb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+```
+
+<Note>
+The H2 console is available at `http://localhost:8080/h2-console` for database inspection during development.
+</Note>
+
+### Custom Configuration
+
+You can override default settings using environment variables or command-line arguments:
+
+<CodeGroup>
+  ```bash Environment Variables
+  export SERVER_PORT=9090
+  export SPRING_DATASOURCE_URL=jdbc:h2:file:./data/kitchen
+  ./gradlew bootRun
+  ```
+
+  ```bash Command Line
+  ./gradlew bootRun --args='--server.port=9090 --spring.profiles.active=prod'
+  ```
+
+  ```bash Custom application.yaml
+  # Create application-dev.yaml
+  server:
+    port: 9090
+  
+  # Run with profile
+  ./gradlew bootRun --args='--spring.profiles.active=dev'
+  ```
+</CodeGroup>
+
+## Docker Installation (Alternative)
+
+If you prefer to run the service in a Docker container:
+
+<Steps>
+  <Step title="Build the Docker image">
+    The project includes a multi-stage Dockerfile:
+
+    ```bash
+    docker build -t foodtech-kitchen:latest .
+    ```
+
+    The Dockerfile uses:
+    - **Stage 1**: `gradle:8.5-jdk17` for building the application
+    - **Stage 2**: `eclipse-temurin:17-jre-alpine` for lightweight runtime
+  </Step>
+
+  <Step title="Run the container">
+    Start the service in a Docker container:
+
+    <CodeGroup>
+      ```bash Foreground
+      docker run -p 8080:8080 foodtech-kitchen:latest
+      ```
+
+      ```bash Background
+      docker run -d -p 8080:8080 --name foodtech-api foodtech-kitchen:latest
+      ```
+
+      ```bash With Volume
+      # Persist H2 database
+      docker run -d -p 8080:8080 \
+        -v $(pwd)/data:/app/data \
+        --name foodtech-api \
+        foodtech-kitchen:latest
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Manage the container">
+    Common Docker commands:
+
+    ```bash
+    # View logs
+    docker logs -f foodtech-api
+
+    # Stop the container
+    docker stop foodtech-api
+
+    # Start again
+    docker start foodtech-api
+
+    # Remove container
+    docker rm -f foodtech-api
+    ```
+  </Step>
+</Steps>
+
+## IDE Setup
+
+Recommended IDE configurations for development:
+
+<Tabs>
+  <Tab title="IntelliJ IDEA">
+    1. **Import Project**:
+       - File → Open → Select `build.gradle`
+       - IntelliJ will auto-import Gradle project
+
+    2. **Enable Lombok**:
+       - Install Lombok plugin
+       - Settings → Build → Compiler → Annotation Processors → Enable annotation processing
+
+    3. **Set Java SDK**:
+       - File → Project Structure → Project SDK → Java 17
+
+    4. **Run Configuration**:
+       - Add new Spring Boot configuration
+       - Main class: `com.foodtech.kitchen.KitchenServiceApplication`
+  </Tab>
+
+  <Tab title="VS Code">
+    1. **Install Extensions**:
+       - Extension Pack for Java
+       - Spring Boot Extension Pack
+       - Lombok Annotations Support
+
+    2. **Open Project**:
+       - File → Open Folder → Select `FoodTech` directory
+
+    3. **Gradle Sync**:
+       - Open Command Palette (Ctrl+Shift+P)
+       - Run: `Java: Clean Java Language Server Workspace`
+
+    4. **Run Application**:
+       - Open `KitchenServiceApplication.java`
+       - Click "Run" above the main method
+  </Tab>
+
+  <Tab title="Eclipse">
+    1. **Import Project**:
+       - File → Import → Gradle → Existing Gradle Project
+       - Select `FoodTech` directory
+
+    2. **Install Lombok**:
+       - Download lombok.jar from projectlombok.org
+       - Run: `java -jar lombok.jar`
+       - Select Eclipse installation directory
+
+    3. **Run Application**:
+       - Right-click `KitchenServiceApplication.java`
+       - Run As → Java Application
+  </Tab>
+</Tabs>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Port 8080 already in use">
+    If port 8080 is already occupied:
+
+    ```bash
+    # Find process using port 8080
+    lsof -i :8080
+
+    # Kill the process (Mac/Linux)
+    kill -9 <PID>
+
+    # Or run on different port
+    ./gradlew bootRun --args='--server.port=9090'
+    ```
+  </Accordion>
+
+  <Accordion title="Gradle dependencies not downloading">
+    If dependencies fail to download:
+
+    ```bash
+    # Stop all Gradle daemons
+    ./gradlew --stop
+
+    # Clean and refresh dependencies
+    ./gradlew clean build --refresh-dependencies
+
+    # Check dependency tree
+    ./gradlew dependencies --configuration runtimeClasspath
+    ```
+  </Accordion>
+
+  <Accordion title="Java version mismatch">
+    If you encounter Java version errors:
+
+    ```bash
+    # Check current Java version
+    java -version
+    echo $JAVA_HOME
+
+    # Set Java 17 (Mac with brew)
+    export JAVA_HOME=$(/usr/libexec/java_home -v 17)
+
+    # Set Java 17 (Linux)
+    export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
+    export PATH=$JAVA_HOME/bin:$PATH
+    ```
+  </Accordion>
+
+  <Accordion title="Tests failing on build">
+    If tests fail during build:
+
+    ```bash
+    # Skip tests temporarily
+    ./gradlew build -x test
+
+    # Run specific test
+    ./gradlew test --tests "OrderControllerIntegrationTest"
+
+    # Run with verbose output
+    ./gradlew test --info
+    ```
+  </Accordion>
+
+  <Accordion title="IDE not recognizing Lombok annotations">
+    For Lombok issues:
+
+    **IntelliJ IDEA**:
+    - File → Settings → Plugins → Install "Lombok"
+    - File → Settings → Build, Execution, Deployment → Compiler → Annotation Processors → Enable
+
+    **VS Code**:
+    - Install "Lombok Annotations Support for VS Code" extension
+    - Java: Clean Language Server Workspace
+
+    **Eclipse**:
+    - Download and run lombok.jar installer
+    - Restart Eclipse
+  </Accordion>
+</AccordionGroup>
+
+## Development Workflow
+
+Once installed, use these commands for daily development:
+
+<CodeGroup>
+  ```bash Run Service
+  # Start service in development mode
+  ./gradlew bootRun
+  ```
+
+  ```bash Run Tests
+  # Run all tests
+  ./gradlew test
+
+  # Run specific test class
+  ./gradlew test --tests "ProcessOrderUseCaseTest"
+
+  # Run with coverage
+  ./gradlew test jacocoTestReport
+  ```
+
+  ```bash Build JAR
+  # Build production JAR
+  ./gradlew clean build
+
+  # JAR location
+  ls -lh build/libs/kitchen-service-0.0.1-SNAPSHOT.jar
+  ```
+
+  ```bash Clean Build
+  # Clean all build artifacts
+  ./gradlew clean
+
+  # Full clean and rebuild
+  ./gradlew clean build --refresh-dependencies
+  ```
+</CodeGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="rocket" href="/quickstart">
+    Create your first kitchen order in 5 minutes
+  </Card>
+  <Card title="API Reference" icon="book" href="/api/overview">
+    Explore all available REST endpoints
+  </Card>
+  <Card title="Architecture" icon="sitemap" href="/architecture/overview">
+    Learn about hexagonal architecture and design patterns
+  </Card>
+  <Card title="Testing Guide" icon="flask" href="/guides/testing">
+    Learn how to run tests and verify your installation
+  </Card>
+</CardGroup>
+
+## Additional Resources
+
+<CardGroup cols={2}>
+  <Card title="Spring Boot Docs" icon="leaf" href="https://spring.io/projects/spring-boot">
+    Official Spring Boot documentation
+  </Card>
+  <Card title="Gradle Docs" icon="book" href="https://docs.gradle.org">
+    Gradle build tool documentation
+  </Card>
+  <Card title="Java 17 Features" icon="java" href="https://www.oracle.com/java/technologies/javase/17-relnote-issues.html">
+    What's new in Java 17
+  </Card>
+  <Card title="Docker Guide" icon="docker" href="https://docs.docker.com">
+    Docker containerization guide
+  </Card>
+</CardGroup>

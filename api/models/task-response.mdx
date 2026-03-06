@@ -1,0 +1,160 @@
+---
+title: 'TaskResponse'
+description: 'Response model representing a kitchen preparation task'
+---
+
+## Overview
+
+The `TaskResponse` model represents a single preparation task assigned to a kitchen station. Tasks are automatically created when orders are processed and distributed to the appropriate station based on product types.
+
+## Fields
+
+<ResponseField name="id" type="long" required>
+  Unique identifier for the task.
+</ResponseField>
+
+<ResponseField name="orderId" type="long" required>
+  The ID of the order this task belongs to. Multiple tasks can belong to the same order if products need to be prepared at different stations.
+</ResponseField>
+
+<ResponseField name="station" type="string" required>
+  The kitchen station responsible for this task.
+  
+  **Possible values:**
+  - `BAR` - For drinks
+  - `HOT_KITCHEN` - For hot dishes
+  - `COLD_KITCHEN` - For cold dishes
+</ResponseField>
+
+<ResponseField name="tableNumber" type="string" required>
+  The table number this task is for. Used to deliver the prepared items to the correct table.
+</ResponseField>
+
+<ResponseField name="products" type="array" required>
+  Array of products included in this task. All products in a task are prepared at the same station.
+  
+  <Expandable title="Product object properties">
+    <ResponseField name="name" type="string" required>
+      The name of the product to prepare (e.g., "Caesar Salad", "Mojito")
+    </ResponseField>
+    
+    <ResponseField name="type" type="string" required>
+      The product type: `DRINK`, `HOT_DISH`, or `COLD_DISH`
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+<ResponseField name="createdAt" type="string (ISO 8601)" required>
+  Timestamp when the task was created.
+  
+  Format: `YYYY-MM-DDTHH:mm:ss`
+</ResponseField>
+
+<ResponseField name="status" type="string" required>
+  Current status of the task.
+  
+  **Possible values:**
+  - `PENDING` - Task is waiting to be started
+  - `IN_PREPARATION` - Task is currently being prepared
+  - `COMPLETED` - Task has been finished
+</ResponseField>
+
+<ResponseField name="startedAt" type="string (ISO 8601)" optional>
+  Timestamp when preparation started. Will be `null` if the task hasn't been started yet.
+  
+  Format: `YYYY-MM-DDTHH:mm:ss`
+</ResponseField>
+
+<ResponseField name="completedAt" type="string (ISO 8601)" optional>
+  Timestamp when the task was completed. Will be `null` if the task hasn't been completed yet.
+  
+  Format: `YYYY-MM-DDTHH:mm:ss`
+</ResponseField>
+
+## Task Lifecycle
+
+<Steps>
+  <Step title="Task Created">
+    Task is created with status `PENDING` when an order is submitted. The `createdAt` timestamp is set.
+  </Step>
+  
+  <Step title="Preparation Started">
+    When a kitchen worker starts preparing the task, status changes to `IN_PREPARATION` and `startedAt` is set.
+  </Step>
+  
+  <Step title="Task Completed">
+    When preparation is finished, status changes to `COMPLETED` and `completedAt` is set.
+  </Step>
+</Steps>
+
+## Example - Pending Task
+
+```json
+{
+  "id": 101,
+  "orderId": 45,
+  "station": "HOT_KITCHEN",
+  "tableNumber": "12",
+  "products": [
+    {
+      "name": "Grilled Salmon",
+      "type": "HOT_DISH"
+    }
+  ],
+  "createdAt": "2026-03-06T14:30:00",
+  "status": "PENDING",
+  "startedAt": null,
+  "completedAt": null
+}
+```
+
+## Example - Task In Preparation
+
+```json
+{
+  "id": 102,
+  "orderId": 45,
+  "station": "BAR",
+  "tableNumber": "12",
+  "products": [
+    {
+      "name": "Mojito",
+      "type": "DRINK"
+    },
+    {
+      "name": "Margarita",
+      "type": "DRINK"
+    }
+  ],
+  "createdAt": "2026-03-06T14:30:00",
+  "status": "IN_PREPARATION",
+  "startedAt": "2026-03-06T14:32:15",
+  "completedAt": null
+}
+```
+
+## Example - Completed Task
+
+```json
+{
+  "id": 103,
+  "orderId": 45,
+  "station": "COLD_KITCHEN",
+  "tableNumber": "12",
+  "products": [
+    {
+      "name": "Caesar Salad",
+      "type": "COLD_DISH"
+    }
+  ],
+  "createdAt": "2026-03-06T14:30:00",
+  "status": "COMPLETED",
+  "startedAt": "2026-03-06T14:31:00",
+  "completedAt": "2026-03-06T14:35:30"
+}
+```
+
+## Related Models
+
+- [CreateOrderRequest](/api/models/order-request) - Model for creating orders that generate tasks
+- [CreateOrderResponse](/api/models/order-response) - Response showing how many tasks were created

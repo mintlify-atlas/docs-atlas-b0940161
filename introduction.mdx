@@ -1,0 +1,103 @@
+---
+title: Introduction
+description: A kitchen order management system that decomposes restaurant orders into station-specific preparation tasks using hexagonal architecture and the Command Pattern.
+---
+
+## Welcome to FoodTech Kitchen Service
+
+FoodTech Kitchen Service is a robust restaurant kitchen management system designed to automate the decomposition of customer orders into station-specific preparation tasks. Built with clean architecture principles and powered by the Command Pattern, it streamlines kitchen operations across multiple cooking stations.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running in 5 minutes
+  </Card>
+  <Card title="Architecture" icon="diagram-project" href="/architecture/overview">
+    Learn about the hexagonal architecture
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/overview">
+    Explore the REST API endpoints
+  </Card>
+  <Card title="Domain Model" icon="cube" href="/domain/order">
+    Understand the core domain entities
+  </Card>
+</CardGroup>
+
+## What Problem Does It Solve?
+
+When a restaurant order contains multiple products (drinks, hot dishes, salads), the system automatically groups them by station and creates specific tasks for each kitchen workstation:
+
+| Station | Products | Preparation Time |
+|---------|----------|------------------|
+| **BAR** 🍹 | Beverages, cocktails | 3 seconds per drink |
+| **HOT_KITCHEN** 🔥 | Main courses, soups | 7 seconds per dish |
+| **COLD_KITCHEN** 🥗 | Salads, desserts | 5 seconds per dish |
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Hexagonal Architecture" icon="hexagon">
+    Clear separation of concerns with domain, application, and infrastructure layers
+  </Card>
+  <Card title="Command Pattern" icon="terminal">
+    Station-specific commands encapsulate preparation logic for each kitchen area
+  </Card>
+  <Card title="SOLID Principles" icon="check-double">
+    Built with best practices including SRP, OCP, LSP, ISP, and DIP
+  </Card>
+  <Card title="REST API" icon="globe">
+    Full REST API for order processing and task management
+  </Card>
+  <Card title="Docker Ready" icon="docker">
+    Multi-stage Docker builds for easy deployment
+  </Card>
+  <Card title="Test Coverage" icon="flask">
+    Comprehensive unit and integration tests with TDD approach
+  </Card>
+</CardGroup>
+
+## Technology Stack
+
+- **Java 17** - Modern Java with records and pattern matching
+- **Spring Boot 3.2.1** - Application framework
+- **Spring Data JPA** - Database persistence
+- **H2 Database** - In-memory database for development
+- **Gradle 8.5** - Build automation
+- **JUnit 5** - Testing framework
+- **Docker** - Containerization
+
+## How It Works
+
+<Steps>
+  <Step title="Receive Order">
+    The system receives an order via REST API containing a table number and list of products
+  </Step>
+  <Step title="Decompose into Tasks">
+    The TaskDecomposer groups products by their station (Bar, Hot Kitchen, Cold Kitchen)
+  </Step>
+  <Step title="Create Commands">
+    For each station, a specific Command is created (PrepareDrinkCommand, PrepareHotDishCommand, etc.)
+  </Step>
+  <Step title="Execute Preparation">
+    Commands are executed synchronously, simulating real-world preparation times
+  </Step>
+  <Step title="Track Status">
+    Tasks can be queried by station and their status tracked (PENDING → IN_PREPARATION → COMPLETED)
+  </Step>
+</Steps>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Quickstart Guide" icon="play" href="/quickstart">
+    Create your first order in minutes
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Set up the development environment
+  </Card>
+  <Card title="Command Pattern Deep Dive" icon="book" href="/architecture/command-pattern">
+    Learn how the Command Pattern is implemented
+  </Card>
+  <Card title="API Documentation" icon="book-open" href="/api/orders">
+    Explore the REST API endpoints
+  </Card>
+</CardGroup>

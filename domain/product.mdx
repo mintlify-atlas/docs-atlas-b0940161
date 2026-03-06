@@ -1,0 +1,272 @@
+---
+title: 'Product'
+description: 'Domain model representing a food or beverage item in an order'
+---
+
+## Overview
+
+The `Product` class represents a food or beverage item that can be ordered by customers. Each product has a name and a type that determines which kitchen station will prepare it. Products are immutable value objects in the domain model.
+
+<Note>
+  Product follows the **Value Object** pattern from Domain-Driven Design. Two products with the same name and type are considered equal.
+</Note>
+
+## Class Definition
+
+```java
+package com.foodtech.kitchen.domain.model;
+
+public class Product {
+    private final String name;
+    private final ProductType type;
+
+    public Product(String name, ProductType type) {
+        validate(name, type);
+        this.name = name;
+        this.type = type;
+    }
+}
+```
+
+## Fields
+
+<ParamField path="name" type="String" required>
+  The name of the product (e.g., "Caesar Salad", "Grilled Steak", "Mojito"). Cannot be null or blank.
+</ParamField>
+
+<ParamField path="type" type="ProductType" required>
+  The type of product, which determines the station that will prepare it. Must be one of: DRINK, HOT_DISH, or COLD_DISH.
+</ParamField>
+
+## Constructor
+
+```java
+public Product(String name, ProductType type)
+```
+
+Creates a new Product instance.
+
+**Parameters:**
+- `name` - The product name (required, cannot be null or blank)
+- `type` - The product type (required, cannot be null)
+
+**Throws:**
+- `IllegalArgumentException` if name is null or blank
+- `IllegalArgumentException` if type is null
+
+<Warning>
+  The name is checked with `isBlank()`, which returns true for empty strings and strings containing only whitespace.
+</Warning>
+
+## Validation Rules
+
+The Product class enforces the following validation:
+
+| Field | Validation | Exception |
+|-------|------------|----------|
+| **Name** | Cannot be null or blank (empty/whitespace) | `IllegalArgumentException` |
+| **Type** | Cannot be null | `IllegalArgumentException` |
+
+### Validation Implementation
+
+```java
+private void validate(String name, ProductType type) {
+    if (name == null || name.isBlank()) {
+        throw new IllegalArgumentException("Product name cannot be null or empty");
+    }
+    if (type == null) {
+        throw new IllegalArgumentException("Product type cannot be null");
+    }
+}
+```
+
+## Public Methods
+
+### getName()
+
+```java
+public String getName()
+```
+
+Returns the product name.
+
+### getType()
+
+```java
+public ProductType getType()
+```
+
+Returns the product type, which determines the assigned station.
+
+## ProductType Enum
+
+The `ProductType` enum defines the three types of products and their associated stations:
+
+```java
+public enum ProductType {
+    DRINK(Station.BAR),
+    HOT_DISH(Station.HOT_KITCHEN),
+    COLD_DISH(Station.COLD_KITCHEN);
+
+    private final Station station;
+
+    ProductType(Station station) {
+        this.station = station;
+    }
+
+    public Station getStation() {
+        return station;
+    }
+}
+```
+
+### Product Type Mappings
+
+| ProductType | Station | Examples |
+|------------|---------|----------|
+| **DRINK** | BAR | Mojito, Lemonade, Coffee, Beer |
+| **HOT_DISH** | HOT_KITCHEN | Grilled Steak, Pasta, Soup |
+| **COLD_DISH** | COLD_KITCHEN | Caesar Salad, Ceviche, Carpaccio |
+
+### getStation()
+
+Each `ProductType` knows its assigned station:
+
+```java
+ProductType type = ProductType.DRINK;
+Station station = type.getStation(); // Returns Station.BAR
+```
+
+<Tip>
+  This design follows the **Open-Closed Principle**. Each ProductType encapsulates its station mapping, eliminating the need for a separate mapper class.
+</Tip>
+
+## Usage Examples
+
+### Creating Products
+
+```java
+// Creating different types of products
+Product salad = new Product("Caesar Salad", ProductType.COLD_DISH);
+Product steak = new Product("Grilled Steak", ProductType.HOT_DISH);
+Product mojito = new Product("Mojito", ProductType.DRINK);
+
+// Accessing product information
+String name = salad.getName();        // "Caesar Salad"
+ProductType type = salad.getType();   // ProductType.COLD_DISH
+Station station = type.getStation();  // Station.COLD_KITCHEN
+```
+
+### Validation Examples
+
+```java
+// Valid products
+Product valid1 = new Product("Pizza", ProductType.HOT_DISH); // OK
+Product valid2 = new Product("   Soup   ", ProductType.HOT_DISH); // OK (spaces are valid)
+
+// Invalid products - will throw IllegalArgumentException
+try {
+    Product invalid1 = new Product(null, ProductType.DRINK);
+} catch (IllegalArgumentException e) {
+    // "Product name cannot be null or empty"
+}
+
+try {
+    Product invalid2 = new Product("", ProductType.DRINK);
+} catch (IllegalArgumentException e) {
+    // "Product name cannot be null or empty"
+}
+
+try {
+    Product invalid3 = new Product("   ", ProductType.DRINK);
+} catch (IllegalArgumentException e) {
+    // "Product name cannot be null or empty" (isBlank() catches whitespace)
+}
+
+try {
+    Product invalid4 = new Product("Pizza", null);
+} catch (IllegalArgumentException e) {
+    // "Product type cannot be null"
+}
+```
+
+### Determining Station Assignment
+
+```java
+// Products automatically know their station through their type
+Product drink = new Product("Beer", ProductType.DRINK);
+Station barStation = drink.getType().getStation(); // Station.BAR
+
+Product hotFood = new Product("Pasta", ProductType.HOT_DISH);
+Station hotKitchen = hotFood.getType().getStation(); // Station.HOT_KITCHEN
+
+Product coldFood = new Product("Sushi", ProductType.COLD_DISH);
+Station coldKitchen = coldFood.getType().getStation(); // Station.COLD_KITCHEN
+```
+
+### Grouping Products by Station
+
+```java
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+List<Product> products = List.of(
+    new Product("Mojito", ProductType.DRINK),
+    new Product("Caesar Salad", ProductType.COLD_DISH),
+    new Product("Grilled Steak", ProductType.HOT_DISH),
+    new Product("Beer", ProductType.DRINK)
+);
+
+// Group products by their station
+Map<Station, List<Product>> byStation = products.stream()
+    .collect(Collectors.groupingBy(p -> p.getType().getStation()));
+
+// Result:
+// Station.BAR -> [Mojito, Beer]
+// Station.COLD_KITCHEN -> [Caesar Salad]
+// Station.HOT_KITCHEN -> [Grilled Steak]
+```
+
+## Design Patterns and Principles
+
+<Card title="Value Object Pattern" icon="gem">
+  Product is immutable with all fields `final`. It represents a value rather than an entity with identity.
+</Card>
+
+<Card title="Open-Closed Principle" icon="door-open">
+  ProductType encapsulates station mapping within the enum itself. Adding a new product type doesn't require modifying other classes.
+</Card>
+
+<Card title="Fail-Fast Validation" icon="circle-exclamation">
+  All validation happens in the constructor, ensuring invalid products cannot exist in the system.
+</Card>
+
+## Architecture Notes
+
+### Why ProductType Contains Station
+
+The implementation includes a design comment explaining an architectural decision:
+
+```java
+//HUMAN REVIEW: Agregué campo station a ProductType para eliminar violación OCP.
+//Ahora cada ProductType conoce su Station, eliminando necesidad de ProductStationMapper.
+//Cumple OCP: agregar nuevo tipo no requiere modificar otras clases.
+```
+
+This design choice:
+- **Eliminates** the need for a separate `ProductStationMapper` class
+- **Follows OCP** (Open-Closed Principle) - new product types can be added without modifying existing code
+- **Encapsulates** the station mapping logic within the enum itself
+- **Reduces coupling** between domain classes
+
+<Note>
+  This is an example of refactoring toward better adherence to SOLID principles. The station mapping is now a property of the product type itself, not an external mapping.
+</Note>
+
+## Related Models
+
+- [ProductType](/domain/product#producttype-enum) - Enum defining product categories
+- [Station](/domain/stations) - Kitchen stations that prepare products
+- [Order](/domain/order) - Contains lists of products
+- [Task](/domain/task) - Contains products filtered by station

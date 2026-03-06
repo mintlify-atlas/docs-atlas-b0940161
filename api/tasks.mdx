@@ -1,0 +1,289 @@
+---
+title: Tasks API
+description: Manage kitchen tasks and station workflows
+---
+
+## Get Tasks by Station
+
+<api-endpoint method="GET" path="/api/tasks/station/{station}" />
+
+Retrieves all tasks assigned to a specific kitchen station, optionally filtered by status.
+
+### Path Parameters
+
+<ParamField path="station" type="string" required>
+  The kitchen station identifier. Must be one of:
+  - `BAR` - Beverage preparation station
+  - `HOT_KITCHEN` - Hot food preparation station
+  - `COLD_KITCHEN` - Cold food preparation station
+</ParamField>
+
+### Query Parameters
+
+<ParamField query="status" type="string" optional>
+  Filter tasks by status. If omitted, returns all tasks for the station. Valid values:
+  - `PENDING` - Tasks waiting to start
+  - `IN_PREPARATION` - Tasks currently being prepared
+  - `COMPLETED` - Finished tasks
+</ParamField>
+
+### Response
+
+Returns an array of task objects:
+
+<ResponseField name="id" type="long">
+  Unique identifier for the task
+</ResponseField>
+
+<ResponseField name="orderId" type="long">
+  ID of the order this task belongs to
+</ResponseField>
+
+<ResponseField name="station" type="string">
+  Station assigned to this task (BAR, HOT_KITCHEN, or COLD_KITCHEN)
+</ResponseField>
+
+<ResponseField name="tableNumber" type="string">
+  Table number for the order
+</ResponseField>
+
+<ResponseField name="products" type="array">
+  List of products to prepare in this task. Each product has:
+  - `name` - Product name
+  - `type` - Product type (BEVERAGE, HOT_FOOD, COLD_FOOD)
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the task was created (ISO 8601 format)
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Current task status (PENDING, IN_PREPARATION, or COMPLETED)
+</ResponseField>
+
+<ResponseField name="startedAt" type="string" optional>
+  Timestamp when the task preparation started (null if not started)
+</ResponseField>
+
+<ResponseField name="completedAt" type="string" optional>
+  Timestamp when the task was completed (null if not completed)
+</ResponseField>
+
+### Example Request - All Tasks
+
+```bash
+curl http://localhost:8080/api/tasks/station/HOT_KITCHEN
+```
+
+### Example Request - Filtered by Status
+
+```bash
+curl http://localhost:8080/api/tasks/station/BAR?status=PENDING
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": 1,
+    "orderId": 5,
+    "station": "HOT_KITCHEN",
+    "tableNumber": "5",
+    "products": [
+      {
+        "name": "Grilled Chicken",
+        "type": "HOT_FOOD"
+      },
+      {
+        "name": "Pasta Carbonara",
+        "type": "HOT_FOOD"
+      }
+    ],
+    "createdAt": "2026-03-06T10:30:45.123",
+    "status": "PENDING",
+    "startedAt": null,
+    "completedAt": null
+  },
+  {
+    "id": 2,
+    "orderId": 6,
+    "station": "HOT_KITCHEN",
+    "tableNumber": "3",
+    "products": [
+      {
+        "name": "Steak",
+        "type": "HOT_FOOD"
+      }
+    ],
+    "createdAt": "2026-03-06T10:25:30.456",
+    "status": "IN_PREPARATION",
+    "startedAt": "2026-03-06T10:26:00.789",
+    "completedAt": null
+  }
+]
+```
+
+### Error Responses
+
+**400 Bad Request - Invalid Station:**
+```json
+{
+  "error": "Invalid value 'INVALID_STATION' for parameter 'station'. Expected one of: BAR, HOT_KITCHEN, COLD_KITCHEN",
+  "message": "Invalid parameter type",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 400
+}
+```
+
+**400 Bad Request - Invalid Status:**
+```json
+{
+  "error": "Invalid value 'INVALID_STATUS' for parameter 'status'. Expected one of: BAR, HOT_KITCHEN, COLD_KITCHEN",
+  "message": "Invalid parameter type",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 400
+}
+```
+
+---
+
+## Start Task Preparation
+
+<api-endpoint method="PATCH" path="/api/tasks/{id}/start" />
+
+Starts the preparation of a task, updating its status to `IN_PREPARATION` and recording the start timestamp.
+
+### Path Parameters
+
+<ParamField path="id" type="long" required>
+  The unique identifier of the task to start
+</ParamField>
+
+### Response
+
+Returns the updated task object:
+
+<ResponseField name="id" type="long">
+  Unique identifier for the task
+</ResponseField>
+
+<ResponseField name="orderId" type="long">
+  ID of the order this task belongs to
+</ResponseField>
+
+<ResponseField name="station" type="string">
+  Station assigned to this task
+</ResponseField>
+
+<ResponseField name="tableNumber" type="string">
+  Table number for the order
+</ResponseField>
+
+<ResponseField name="products" type="array">
+  List of products to prepare
+</ResponseField>
+
+<ResponseField name="createdAt" type="string">
+  Timestamp when the task was created
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Updated status: `IN_PREPARATION`
+</ResponseField>
+
+<ResponseField name="startedAt" type="string">
+  Timestamp when preparation started (just set)
+</ResponseField>
+
+<ResponseField name="completedAt" type="string" optional>
+  Timestamp when completed (null for newly started tasks)
+</ResponseField>
+
+### Example Request
+
+```bash
+curl -X PATCH http://localhost:8080/api/tasks/1/start
+```
+
+### Example Response
+
+```json
+{
+  "id": 1,
+  "orderId": 5,
+  "station": "HOT_KITCHEN",
+  "tableNumber": "5",
+  "products": [
+    {
+      "name": "Grilled Chicken",
+      "type": "HOT_FOOD"
+    }
+  ],
+  "createdAt": "2026-03-06T10:30:45.123",
+  "status": "IN_PREPARATION",
+  "startedAt": "2026-03-06T10:35:20.456",
+  "completedAt": null
+}
+```
+
+### Error Responses
+
+**404 Not Found:**
+```json
+{
+  "error": "Task with id 999 not found",
+  "message": "Task not found",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 404
+}
+```
+
+**400 Bad Request - Invalid State:**
+```json
+{
+  "error": "Task is already completed",
+  "message": "Invalid state transition",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 400
+}
+```
+
+---
+
+## Task Workflow
+
+Tasks follow this lifecycle:
+
+1. **Created** - Task is created with `PENDING` status when an order is placed
+2. **Started** - Kitchen staff calls `PATCH /api/tasks/{id}/start` to begin preparation
+3. **Completed** - Task status moves to `COMPLETED` (implementation depends on business logic)
+
+## Station Assignment
+
+Tasks are automatically assigned to stations based on product types:
+
+| Product Type | Assigned Station |
+|--------------|------------------|
+| `BEVERAGE` | BAR |
+| `HOT_FOOD` | HOT_KITCHEN |
+| `COLD_FOOD` | COLD_KITCHEN |
+
+A single order with products for multiple stations will generate one task per station.
+
+## Filtering Best Practices
+
+**Get all pending tasks for a station:**
+```bash
+curl http://localhost:8080/api/tasks/station/BAR?status=PENDING
+```
+
+**Monitor in-progress tasks:**
+```bash
+curl http://localhost:8080/api/tasks/station/HOT_KITCHEN?status=IN_PREPARATION
+```
+
+**View task history:**
+```bash
+curl http://localhost:8080/api/tasks/station/COLD_KITCHEN?status=COMPLETED
+```

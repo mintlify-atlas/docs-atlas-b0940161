@@ -1,0 +1,133 @@
+---
+title: API Overview
+description: Learn about the FoodTech Kitchen Service API structure and common patterns
+---
+
+## Introduction
+
+The FoodTech Kitchen Service API is a RESTful API that manages kitchen operations for a restaurant. It handles order processing, task creation, and kitchen station workflow coordination.
+
+## Base URL
+
+The API is served at the following base URL:
+
+```
+http://localhost:8080/api
+```
+
+## API Structure
+
+The API is organized into two main resource groups:
+
+- **Orders** (`/api/orders`) - Manage restaurant orders and check their status
+- **Tasks** (`/api/tasks`) - Manage kitchen tasks assigned to different stations
+
+## Common Patterns
+
+### Request Format
+
+All requests accept and return JSON format. Include the appropriate `Content-Type` header:
+
+```bash
+Content-Type: application/json
+```
+
+### Response Format
+
+All API responses follow a consistent JSON structure:
+
+**Success Response:**
+```json
+{
+  "tableNumber": "5",
+  "tasksCreated": 3,
+  "message": "Order processed successfully"
+}
+```
+
+**Error Response:**
+```json
+{
+  "error": "Order with id 999 not found",
+  "message": "Order not found",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 404
+}
+```
+
+### HTTP Status Codes
+
+The API uses standard HTTP status codes:
+
+| Code | Description |
+|------|-------------|
+| `200` | Success - Request completed successfully |
+| `201` | Created - Resource created successfully |
+| `400` | Bad Request - Invalid parameters or validation failed |
+| `404` | Not Found - Resource not found |
+| `500` | Internal Server Error - Server-side error |
+
+### Kitchen Stations
+
+The system supports three kitchen stations:
+
+- `BAR` - Beverage preparation station
+- `HOT_KITCHEN` - Hot food preparation station
+- `COLD_KITCHEN` - Cold food and salad preparation station
+
+### Task Status Workflow
+
+Tasks progress through the following statuses:
+
+1. `PENDING` - Task created, waiting to start
+2. `IN_PREPARATION` - Task is being prepared
+3. `COMPLETED` - Task finished
+
+## Error Handling
+
+The API implements centralized error handling with descriptive error messages:
+
+**Validation Errors (400):**
+```json
+{
+  "error": "Table number cannot be null or empty",
+  "message": "Validation failed",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 400
+}
+```
+
+**Not Found Errors (404):**
+```json
+{
+  "error": "Task with id 123 not found",
+  "message": "Task not found",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 404
+}
+```
+
+**Invalid State Errors (400):**
+```json
+{
+  "error": "Task is already completed",
+  "message": "Invalid state transition",
+  "timestamp": "2026-03-06T10:30:45.123",
+  "status": 400
+}
+```
+
+## Authentication
+
+The current version of the API does not require authentication. This may change in future releases.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Orders" icon="receipt" href="/api/orders">
+    Learn how to create and manage orders
+  </Card>
+  <Card title="Tasks" icon="list-check" href="/api/tasks">
+    Manage kitchen tasks and station workflows
+  </Card>
+</CardGroup>

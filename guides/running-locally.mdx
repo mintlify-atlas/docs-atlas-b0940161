@@ -1,0 +1,165 @@
+---
+title: Running Locally
+description: Learn how to set up and run the FoodTech Kitchen Service on your local development environment
+---
+
+This guide walks you through setting up the FoodTech Kitchen Service on your local machine for development and testing.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Java 17** or higher
+- **Gradle 8.5** (included via Gradle wrapper)
+- **Git** for cloning the repository
+
+## Getting Started
+
+<Steps>
+
+<Step title="Clone the Repository">
+
+First, clone the repository to your local machine:
+
+```bash
+git clone <repository-url>
+cd FoodTech
+```
+
+</Step>
+
+<Step title="Verify Java Installation">
+
+Confirm that Java 17 is installed and set as your default:
+
+```bash
+java -version
+```
+
+You should see output indicating Java 17 or higher.
+
+</Step>
+
+<Step title="Build the Project">
+
+Use the Gradle wrapper to build the project and download dependencies:
+
+<CodeGroup>
+
+```bash Unix/Linux
+./gradlew clean build
+```
+
+```bash Windows
+gradlew.bat clean build
+```
+
+</CodeGroup>
+
+This command will:
+- Download all project dependencies
+- Compile the source code
+- Run all tests
+- Generate the executable JAR file
+
+</Step>
+
+<Step title="Run the Application">
+
+Start the application using one of these methods:
+
+<CodeGroup>
+
+```bash Gradle Wrapper (Recommended)
+./gradlew bootRun
+```
+
+```bash Direct JAR Execution
+./gradlew build
+java -jar build/libs/kitchen-service-0.0.1-SNAPSHOT.jar
+```
+
+</CodeGroup>
+
+The application will start on `http://localhost:8080`.
+
+</Step>
+
+<Step title="Verify the Application">
+
+Test the API by creating a sample order:
+
+```bash
+curl -X POST http://localhost:8080/api/orders \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tableNumber": "A1",
+    "products": [
+      {"name": "Coca Cola", "type": "DRINK"},
+      {"name": "Pizza Margherita", "type": "HOT_DISH"},
+      {"name": "Caesar Salad", "type": "COLD_DISH"}
+    ]
+  }'
+```
+
+Expected response:
+
+```json
+{
+  "tableNumber": "A1",
+  "tasksCreated": 3,
+  "message": "Order processed successfully"
+}
+```
+
+</Step>
+
+</Steps>
+
+## Configuration
+
+The application uses an embedded H2 database by default, configured in `src/main/resources/application.yaml`. No additional database setup is required for local development.
+
+### Default Configuration
+
+- **Server Port**: 8080
+- **Database**: H2 (in-memory)
+- **CORS**: Enabled for all origins (development only)
+- **Security**: Permissive configuration (development only)
+
+## Troubleshooting
+
+### Port Already in Use
+
+If port 8080 is already in use, you can change it by setting the `SERVER_PORT` environment variable:
+
+```bash
+SERVER_PORT=8081 ./gradlew bootRun
+```
+
+### Dependency Issues
+
+If you encounter dependency resolution problems, try refreshing dependencies:
+
+```bash
+./gradlew --stop
+./gradlew clean build --refresh-dependencies
+```
+
+### IDE Integration
+
+**VS Code:**
+1. Open Command Palette (`Ctrl+Shift+P`)
+2. Run `Java: Restart Language Server`
+3. If issues persist, run `Java: Clean the Java Language Server Workspace`
+
+**IntelliJ IDEA:**
+1. Open the Gradle tool window
+2. Click the Refresh button (⟳)
+3. If issues persist, go to `File → Invalidate Caches / Restart...`
+
+## Next Steps
+
+- Learn how to run the application with [Docker](/guides/docker)
+- Explore the [Testing Guide](/guides/testing) to understand the test structure
+- Check out the [API Reference](/api/orders) for complete endpoint documentation

@@ -1,0 +1,147 @@
+---
+title: "Get Order Status"
+description: "Calculate the overall status of an order based on its tasks"
+---
+
+The `GetOrderStatusUseCase` retrieves all tasks associated with an order and calculates the overall order status by analyzing the state of each task.
+
+## Input Port
+
+The use case implements the `GetOrderStatusPort` interface:
+
+```java
+public interface GetOrderStatusPort {
+    TaskStatus execute(Long orderId);
+}
+```
+
+## Implementation
+
+```java GetOrderStatusUseCase.java
+package com.foodtech.kitchen.application.usecases;
+
+import com.foodtech.kitchen.application.exepcions.OrderNotFoundException;
+import com.foodtech.kitchen.application.ports.in.GetOrderStatusPort;
+import com.foodtech.kitchen.application.ports.out.TaskRepository;
+import com.foodtech.kitchen.domain.model.Task;
+import com.foodtech.kitchen.domain.model.TaskStatus;
+import com.foodtech.kitchen.domain.services.OrderStatusCalculator;
+
+import java.util.List;
+
+public class GetOrderStatusUseCase implements GetOrderStatusPort {
+
+    private final TaskRepository taskRepository;
+    private final OrderStatusCalculator orderStatusCalculator;
+
+    public GetOrderStatusUseCase(TaskRepository taskRepository,
+                                 OrderStatusCalculator orderStatusCalculator) {
+        this.taskRepository = taskRepository;
+        this.orderStatusCalculator = orderStatusCalculator;
+    }
+
+    @Override
+    public TaskStatus execute(Long orderId) {
+        List<Task> tasks = taskRepository.findByOrderId(orderId);
+
+        // Validation: orderId must exist
+        if (tasks.isEmpty()) {
+            throw new OrderNotFoundException(orderId);
+        }
+
+        // Delegate business logic to domain
+        return orderStatusCalculator.calculateOrderStatus(tasks);
+    }
+}
+```
+
+## Use Case Flow
+
+<Steps>
+  <Step title="Retrieve Tasks">
+    Query the `TaskRepository` for all tasks associated with the given `orderId`.
+  </Step>
+  
+  <Step title="Validate Order Exists">
+    If no tasks are found, throw `OrderNotFoundException` since the order doesn't exist.
+  </Step>
+  
+  <Step title="Calculate Status">
+    Delegate to `OrderStatusCalculator` which applies business rules:
+    - **COMPLETED**: All tasks are completed
+    - **IN_PREPARATION**: At least one task has started but not all are completed
+    - **PENDING**: No tasks have been started yet
+  </Step>
+  
+  <Step title="Return Status">
+    Return the calculated `TaskStatus` representing the order's overall state.
+  </Step>
+</Steps>
+
+## Status Calculation Logic
+
+The `OrderStatusCalculator` applies these rules:
+
+```java
+public TaskStatus calculateOrderStatus(List<Task> tasks) {
+    // All tasks completed → order completed
+    if (areAllTasksCompleted(tasks)) {
+        return TaskStatus.COMPLETED;
+    }
+
+    // At least one task started → order in preparation
+    if (hasAnyTaskStarted(tasks)) {
+        return TaskStatus.IN_PREPARATION;
+    }
+
+    // No tasks started → order pending
+    return TaskStatus.PENDING;
+}
+```
+
+## Example Usage
+
+```java
+GetOrderStatusPort getOrderStatus = new GetOrderStatusUseCase(
+    taskRepository,
+    orderStatusCalculator
+);
+
+// Check status of order #42
+TaskStatus status = getOrderStatus.execute(42L);
+
+switch (status) {
+    case PENDING:
+        System.out.println("Order is waiting to be prepared");
+        break;
+    case IN_PREPARATION:
+        System.out.println("Order is being prepared");
+        break;
+    case COMPLETED:
+        System.out.println("Order is ready for delivery");
+        break;
+}
+```
+
+## Exceptions
+
+<Warning>
+  If the provided `orderId` doesn't exist (no associated tasks), the use case throws `OrderNotFoundException`.
+</Warning>
+
+## Dependencies
+
+<CardGroup cols={2}>
+  <Card title="TaskRepository" icon="database">
+    Queries tasks by order ID
+  </Card>
+  <Card title="OrderStatusCalculator" icon="calculator">
+    Domain service that implements status calculation rules
+  </Card>
+</CardGroup>
+
+## Related
+
+- [Task Model](/domain/task)
+- [Order Model](/domain/order)
+- [Process Order Use Case](/use-cases/process-order)

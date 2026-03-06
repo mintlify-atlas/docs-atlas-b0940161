@@ -1,0 +1,71 @@
+---
+title: 'CreateOrderRequest'
+description: 'Request model for creating a new order in the kitchen system'
+---
+
+## Overview
+
+The `CreateOrderRequest` model is used to submit a new order to the kitchen. It contains the table number and a list of products to be prepared.
+
+## Fields
+
+<ParamField path="tableNumber" type="string" required>
+  The table number where the order was placed. This is used to identify which table the prepared items should be delivered to.
+</ParamField>
+
+<ParamField path="products" type="ProductRequest[]" required>
+  Array of products included in the order. Each product must specify a name and type.
+  
+  <Expandable title="ProductRequest properties">
+    <ParamField path="name" type="string" required>
+      The name of the product (e.g., "Caesar Salad", "Mojito", "Grilled Salmon")
+    </ParamField>
+    
+    <ParamField path="type" type="string" required>
+      The type of product, which determines which kitchen station will handle it.
+      
+      **Allowed values:**
+      - `DRINK` - Handled by BAR station
+      - `HOT_DISH` - Handled by HOT_KITCHEN station
+      - `COLD_DISH` - Handled by COLD_KITCHEN station
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+## Validation Rules
+
+- **tableNumber**: Must be provided and non-null
+- **products**: Must be a non-empty array
+- **product.name**: Must be provided for each product
+- **product.type**: Must be one of the valid ProductType enum values (DRINK, HOT_DISH, COLD_DISH)
+
+<Note>
+  The product type is case-sensitive and must match exactly one of the enum values. Invalid types will result in a validation error.
+</Note>
+
+## Example
+
+```json
+{
+  "tableNumber": "12",
+  "products": [
+    {
+      "name": "Caesar Salad",
+      "type": "COLD_DISH"
+    },
+    {
+      "name": "Grilled Salmon",
+      "type": "HOT_DISH"
+    },
+    {
+      "name": "Mojito",
+      "type": "DRINK"
+    }
+  ]
+}
+```
+
+## Related Models
+
+- [CreateOrderResponse](/api/models/order-response) - Response returned after creating an order
+- [TaskResponse](/api/models/task-response) - Individual tasks created from the order

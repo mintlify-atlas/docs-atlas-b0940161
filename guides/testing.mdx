@@ -1,0 +1,378 @@
+---
+title: Testing Guide
+description: Comprehensive guide to the testing strategy and test structure in the FoodTech Kitchen Service
+---
+
+The FoodTech Kitchen Service follows a rigorous testing strategy with multiple test levels to ensure code quality, reliability, and maintainability.
+
+## Testing Philosophy
+
+The project implements:
+
+- **Test-Driven Development (TDD)**: Tests are written before or alongside implementation
+- **Multi-Level Testing**: Unit, integration, and end-to-end tests
+- **High Coverage**: Target of 70%+ code coverage
+- **Clean Tests**: Tests follow SOLID principles and are maintainable
+
+## Test Organization
+
+Tests are organized by architectural layer, mirroring the source code structure:
+
+```
+src/test/java/com/foodtech/kitchen/
+├── domain/
+│   ├── commands/          # Command Pattern tests
+│   │   ├── PrepareDrinkCommandTest.java
+│   │   ├── PrepareHotDishCommandTest.java
+│   │   └── PrepareColdDishCommandTest.java
+│   ├── services/          # Domain service tests
+│   │   ├── TaskDecomposerTest.java
+│   │   └── CommandFactoryTest.java
+│   └── model/             # Domain model tests
+│       └── TaskTest.java
+├── application/
+│   └── usecases/          # Use case tests
+│       ├── ProcessOrderUseCaseTest.java
+│       ├── GetOrderStatusUseCaseTest.java
+│       ├── GetTasksByStationUseCaseTest.java
+│       └── StartTaskPreparationUseCaseTest.java
+└── infrastructure/
+    ├── rest/              # REST API tests
+    │   ├── OrderControllerIntegrationTest.java
+    │   ├── TaskControllerIntegrationTest.java
+    │   └── mapper/
+    │       └── OrderMapperTest.java
+    ├── persistence/       # Database tests
+    │   ├── adapters/
+    │   │   ├── OrderRepositoryAdapterTest.java
+    │   │   └── TaskRepositoryAdapterTest.java
+    │   └── jpa/
+    │       ├── TaskJpaRepositoryTest.java
+    │       └── entities/
+    │           └── TaskEntityTest.java
+    └── execution/
+        └── SyncCommandExecutorTest.java
+```
+
+## Running Tests
+
+<Steps>
+
+<Step title="Run All Tests">
+
+Execute the complete test suite:
+
+<CodeGroup>
+
+```bash Gradle Wrapper
+./gradlew test
+```
+
+```bash With Coverage Report
+./gradlew test jacocoTestReport
+```
+
+</CodeGroup>
+
+</Step>
+
+<Step title="Run Specific Test Class">
+
+Execute a single test class:
+
+```bash
+./gradlew test --tests "PrepareDrinkCommandTest"
+```
+
+</Step>
+
+<Step title="Run Tests by Pattern">
+
+Run all tests matching a pattern:
+
+```bash
+./gradlew test --tests "*CommandTest"
+```
+
+</Step>
+
+<Step title="Run with Detailed Output">
+
+Get verbose test execution information:
+
+```bash
+./gradlew test --info
+```
+
+</Step>
+
+</Steps>
+
+## Test Coverage
+
+### Viewing Coverage Reports
+
+After running tests with coverage, open the HTML report:
+
+```bash
+./gradlew test jacocoTestReport
+open build/reports/jacoco/test/html/index.html
+```
+
+### Coverage Configuration
+
+The project uses JaCoCo for coverage analysis, configured in `build.gradle`:
+
+```gradle
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                '**/KitchenServiceApplication.class',
+                '**/infrastructure/config/**',
+                '**/*JpaRepository.class'
+            ])
+        }))
+    }
+}
+```
+
+Excluded from coverage:
+- Application entry point (`KitchenServiceApplication`)
+- Configuration classes
+- Spring Data JPA repositories (framework-generated code)
+
+### Coverage Metrics
+
+| Category | Tests | Coverage |
+|----------|-------|----------|
+| **Domain Layer** | 15 tests | 85%+ |
+| **Application Layer** | 8 tests | 80%+ |
+| **Infrastructure Layer** | 21 tests | 65%+ |
+| **Integration Tests** | 22 tests | Full API coverage |
+
+## Test Types
+
+### Unit Tests
+
+Unit tests verify individual components in isolation using mocks.
+
+**Example: Command Test**
+
+```java
+@Test
+@DisplayName("Debe ejecutar la preparación de bebida")
+void shouldExecuteDrinkPreparation() {
+    // Given
+    Product cocaCola = new Product("Coca Cola", ProductType.DRINK);
+    PrepareDrinkCommand command = new PrepareDrinkCommand(List.of(cocaCola));
+
+    // When & Then
+    assertDoesNotThrow(() -> command.execute());
+}
+```
+
+**Key Characteristics:**
+- Fast execution
+- No external dependencies
+- Tests single responsibility
+- Uses mocks for dependencies
+
+### Integration Tests
+
+Integration tests verify component interactions with real infrastructure.
+
+**Example: Use Case Test**
+
+```java
+@Test
+@DisplayName("Should process order and save tasks")
+void shouldProcessOrderAndSaveTasks() {
+    // Given
+    Product cocaCola = new Product("Coca Cola", ProductType.DRINK);
+    Order order = new Order("A1", List.of(cocaCola));
+    Order savedOrder = Order.reconstruct(1L, "A1", List.of(cocaCola));
+    
+    when(orderRepository.save(order)).thenReturn(savedOrder);
+
+    // When
+    List<Task> tasks = useCase.execute(order);
+
+    // Then
+    assertEquals(1, tasks.size());
+    verify(orderRepository, times(1)).save(order);
+    verify(taskRepository, times(1)).saveAll(anyList());
+}
+```
+
+**Key Characteristics:**
+- Tests component collaboration
+- Uses Spring test context
+- May use in-memory database (H2)
+- Verifies integration points
+
+### End-to-End Tests
+
+E2E tests verify complete API workflows.
+
+**Example: API Integration Test**
+
+```java
+@SpringBootTest
+@AutoConfigureMockMvc
+class OrderControllerIntegrationTest {
+    
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @Test
+    void shouldCreateOrderSuccessfully() throws Exception {
+        mockMvc.perform(post("/api/orders")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(orderJson))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.tableNumber").value("A1"))
+            .andExpect(jsonPath("$.tasksCreated").value(3));
+    }
+}
+```
+
+**Key Characteristics:**
+- Tests full request/response cycle
+- Uses real Spring Boot context
+- Validates JSON serialization
+- Tests HTTP status codes and headers
+
+## Testing Best Practices
+
+### Test Naming Convention
+
+Tests follow a consistent naming pattern:
+
+```java
+@Test
+@DisplayName("Should [expected behavior] when [condition]")
+void should[Action][ExpectedResult]() {
+    // Test implementation
+}
+```
+
+### Test Structure (Given-When-Then)
+
+All tests follow the Given-When-Then pattern:
+
+```java
+@Test
+void shouldProcessMixedOrder() {
+    // Given - Setup test data and mocks
+    Product drink = new Product("Coca Cola", ProductType.DRINK);
+    Product dish = new Product("Pizza", ProductType.HOT_DISH);
+    Order order = new Order("B2", List.of(drink, dish));
+    
+    // When - Execute the action under test
+    List<Task> tasks = useCase.execute(order);
+    
+    // Then - Verify the expected outcome
+    assertEquals(2, tasks.size());
+    verify(taskRepository).saveAll(argThat(list -> list.size() == 2));
+}
+```
+
+### Mocking Strategy
+
+The project uses Mockito for mocking:
+
+- **Mock**: External dependencies (repositories, services)
+- **Real**: Domain objects and value objects
+- **Spy**: When partial mocking is needed
+
+```java
+@BeforeEach
+void setUp() {
+    orderRepository = mock(OrderRepository.class);
+    taskRepository = mock(TaskRepository.class);
+    
+    // Real domain services
+    OrderValidator orderValidator = new OrderValidator();
+    TaskFactory taskFactory = new TaskFactory();
+    taskDecomposer = new TaskDecomposer(orderValidator, taskFactory);
+    
+    useCase = new ProcessOrderUseCase(orderRepository, taskDecomposer, taskRepository);
+}
+```
+
+## Continuous Integration
+
+The project includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that:
+
+1. Runs all tests on every push and pull request
+2. Generates coverage reports
+3. Fails the build if coverage drops below 70%
+4. Publishes test artifacts
+
+**Pipeline Configuration:**
+
+```yaml
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Run tests
+        run: ./gradlew test jacocoTestReport
+```
+
+## Debugging Tests
+
+### Running Tests in Debug Mode
+
+**IntelliJ IDEA:**
+1. Right-click on test class or method
+2. Select "Debug '[TestName]'"
+3. Set breakpoints as needed
+
+**VS Code:**
+1. Install Java Test Runner extension
+2. Click the debug icon next to the test
+3. Use built-in debugger
+
+### Viewing Test Output
+
+Detailed test results are available in:
+
+```bash
+build/reports/tests/test/index.html
+```
+
+This HTML report shows:
+- Test execution time
+- Pass/fail status
+- Failure stack traces
+- Standard output/error
+
+## Next Steps
+
+- Learn how to [run locally](/guides/running-locally)
+- Explore [Docker setup](/guides/docker)
+- Review the [Architecture Overview](/architecture/hexagonal)
+- Check the [API Reference](/api/orders)

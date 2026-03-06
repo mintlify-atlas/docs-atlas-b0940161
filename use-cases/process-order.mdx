@@ -1,0 +1,122 @@
+---
+title: "Process Order"
+description: "Create and decompose an order into preparation tasks"
+---
+
+The `ProcessOrderUseCase` is responsible for receiving a new order and decomposing it into individual preparation tasks that are distributed across different kitchen stations.
+
+## Input Port
+
+The use case implements the `ProcessOrderPort` interface:
+
+```java
+public interface ProcessOrderPort {
+    List<Task> execute(Order order);
+}
+```
+
+## Implementation
+
+```java ProcessOrderUseCase.java
+package com.foodtech.kitchen.application.usecases;
+
+import com.foodtech.kitchen.application.ports.in.ProcessOrderPort;
+import com.foodtech.kitchen.application.ports.out.OrderRepository;
+import com.foodtech.kitchen.application.ports.out.TaskRepository;
+import com.foodtech.kitchen.domain.model.Order;
+import com.foodtech.kitchen.domain.model.Task;
+import com.foodtech.kitchen.domain.services.TaskDecomposer;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class ProcessOrderUseCase implements ProcessOrderPort {
+
+    private final OrderRepository orderRepository;
+    private final TaskDecomposer taskDecomposer;
+    private final TaskRepository taskRepository;
+
+    public ProcessOrderUseCase(
+            OrderRepository orderRepository,
+            TaskDecomposer taskDecomposer,
+            TaskRepository taskRepository
+    ) {
+        this.orderRepository = orderRepository;
+        this.taskDecomposer = taskDecomposer;
+        this.taskRepository = taskRepository;
+    }
+
+    @Override
+    public List<Task> execute(Order order) {
+        Order savedOrder = orderRepository.save(order);
+        List<Task> tasks = taskDecomposer.decompose(savedOrder);
+        taskRepository.saveAll(tasks);
+
+        return tasks;
+    }
+}
+```
+
+## Use Case Flow
+
+<Steps>
+  <Step title="Persist the Order">
+    The incoming order is saved to the `OrderRepository`, which assigns it a unique ID.
+  </Step>
+  
+  <Step title="Decompose into Tasks">
+    The `TaskDecomposer` analyzes the order's products and groups them by station (BAR, HOT_KITCHEN, COLD_KITCHEN), creating one task per station.
+  </Step>
+  
+  <Step title="Save Tasks">
+    All generated tasks are persisted to the `TaskRepository` with status `PENDING`.
+  </Step>
+  
+  <Step title="Return Task List">
+    The complete list of tasks is returned to the caller for tracking purposes.
+  </Step>
+</Steps>
+
+## Example Usage
+
+```java
+// Create an order
+List<Product> products = List.of(
+    new Product("Caesar Salad", ProductType.SALAD),
+    new Product("Grilled Steak", ProductType.MEAT),
+    new Product("Orange Juice", ProductType.BEVERAGE)
+);
+
+Order order = new Order("Table-5", products);
+
+// Process the order
+ProcessOrderPort processOrder = new ProcessOrderUseCase(
+    orderRepository,
+    taskDecomposer,
+    taskRepository
+);
+
+List<Task> tasks = processOrder.execute(order);
+// Returns 3 tasks: one for COLD_KITCHEN, one for HOT_KITCHEN, one for BAR
+```
+
+## Dependencies
+
+<CardGroup cols={3}>
+  <Card title="OrderRepository" icon="database">
+    Persistence port for storing orders
+  </Card>
+  <Card title="TaskDecomposer" icon="sitemap">
+    Domain service that groups products by station
+  </Card>
+  <Card title="TaskRepository" icon="database">
+    Persistence port for storing tasks
+  </Card>
+</CardGroup>
+
+## Related
+
+- [Order Model](/domain/order)
+- [Task Model](/domain/task)
+- [Command Pattern](/architecture/command-pattern)

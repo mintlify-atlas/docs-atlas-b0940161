@@ -1,0 +1,72 @@
+---
+title: 'CreateOrderResponse'
+description: 'Response model returned after successfully creating an order'
+---
+
+## Overview
+
+The `CreateOrderResponse` model is returned when an order is successfully processed. It confirms the order details and indicates how many preparation tasks were created in the kitchen.
+
+## Fields
+
+<ResponseField name="tableNumber" type="string" required>
+  The table number for which the order was created. This matches the table number from the request.
+</ResponseField>
+
+<ResponseField name="tasksCreated" type="integer" required>
+  The number of kitchen tasks that were created from this order. Each task represents work assigned to a specific kitchen station.
+  
+  <Note>
+    Tasks are automatically distributed to appropriate stations based on product types:
+    - DRINK products → BAR station
+    - HOT_DISH products → HOT_KITCHEN station
+    - COLD_DISH products → COLD_KITCHEN station
+  </Note>
+</ResponseField>
+
+<ResponseField name="message" type="string" required>
+  A success message confirming the order was processed. Typically returns `"Order processed successfully"`.
+</ResponseField>
+
+## Example
+
+```json
+{
+  "tableNumber": "12",
+  "tasksCreated": 3,
+  "message": "Order processed successfully"
+}
+```
+
+## Usage Context
+
+This response is returned with HTTP status `201 Created` when you successfully POST to the `/api/orders` endpoint.
+
+### Example Request/Response Flow
+
+**Request:**
+```json
+POST /api/orders
+{
+  "tableNumber": "12",
+  "products": [
+    {"name": "Caesar Salad", "type": "COLD_DISH"},
+    {"name": "Grilled Salmon", "type": "HOT_DISH"},
+    {"name": "Mojito", "type": "DRINK"}
+  ]
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "tableNumber": "12",
+  "tasksCreated": 3,
+  "message": "Order processed successfully"
+}
+```
+
+## Related Models
+
+- [CreateOrderRequest](/api/models/order-request) - Request model for creating orders
+- [TaskResponse](/api/models/task-response) - Details of individual tasks created

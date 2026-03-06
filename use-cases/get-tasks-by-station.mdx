@@ -1,0 +1,128 @@
+---
+title: "Get Tasks by Station"
+description: "Retrieve all tasks assigned to a specific kitchen station"
+---
+
+The `GetTasksByStationUseCase` queries all preparation tasks assigned to a specific kitchen station (BAR, HOT_KITCHEN, or COLD_KITCHEN).
+
+## Input Port
+
+The use case implements the `GetTasksByStationPort` interface:
+
+```java
+public interface GetTasksByStationPort {
+    List<Task> execute(Station station);
+}
+```
+
+## Implementation
+
+```java GetTasksByStationUseCase.java
+package com.foodtech.kitchen.application.usecases;
+
+import com.foodtech.kitchen.application.ports.in.GetTasksByStationPort;
+import com.foodtech.kitchen.application.ports.out.TaskRepository;
+import com.foodtech.kitchen.domain.model.Station;
+import com.foodtech.kitchen.domain.model.Task;
+
+import java.util.List;
+
+public class GetTasksByStationUseCase implements GetTasksByStationPort {
+
+    private final TaskRepository taskRepository;
+
+    public GetTasksByStationUseCase(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
+    }
+
+    @Override
+    public List<Task> execute(Station station) {
+        return taskRepository.findByStation(station);
+    }
+}
+```
+
+## Use Case Flow
+
+<Steps>
+  <Step title="Query Repository">
+    Invoke `taskRepository.findByStation(station)` to retrieve all tasks for the specified station.
+  </Step>
+  
+  <Step title="Return Task List">
+    Return the list of tasks, which may be empty if no tasks are assigned to that station.
+  </Step>
+</Steps>
+
+## Station Types
+
+The kitchen has three stations:
+
+```java
+public enum Station {
+    BAR,          // Beverages and drinks
+    HOT_KITCHEN,  // Hot dishes (meats, soups)
+    COLD_KITCHEN  // Cold dishes (salads, desserts)
+}
+```
+
+## Example Usage
+
+```java
+GetTasksByStationPort getTasksByStation = new GetTasksByStationUseCase(
+    taskRepository
+);
+
+// Get all tasks for the hot kitchen
+List<Task> hotKitchenTasks = getTasksByStation.execute(Station.HOT_KITCHEN);
+
+hotKitchenTasks.forEach(task -> {
+    System.out.println("Task ID: " + task.getId());
+    System.out.println("Order ID: " + task.getOrderId());
+    System.out.println("Table: " + task.getTableNumber());
+    System.out.println("Status: " + task.getStatus());
+    System.out.println("Products: " + task.getProducts());
+});
+```
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Station Dashboard" icon="monitor">
+    Display pending and in-progress tasks for a specific station's UI
+  </Card>
+  <Card title="Load Balancing" icon="scale-balanced">
+    Monitor workload distribution across different stations
+  </Card>
+  <Card title="Priority Management" icon="list-check">
+    Identify which tasks should be started next at each station
+  </Card>
+  <Card title="Performance Tracking" icon="chart-line">
+    Analyze task completion rates by station
+  </Card>
+</CardGroup>
+
+## Filtering by Status
+
+<Note>
+  This use case returns **all** tasks for a station regardless of status. If you need to filter by status (e.g., only PENDING tasks), you can filter the returned list:
+
+  ```java
+  List<Task> pendingTasks = getTasksByStation.execute(Station.BAR)
+      .stream()
+      .filter(task -> task.getStatus() == TaskStatus.PENDING)
+      .toList();
+  ```
+</Note>
+
+## Dependencies
+
+<Card title="TaskRepository" icon="database">
+  Persistence port that provides `findByStation(Station)` query method
+</Card>
+
+## Related
+
+- [Stations](/domain/stations)
+- [Task Model](/domain/task)
+- [Start Task Use Case](/use-cases/start-task)

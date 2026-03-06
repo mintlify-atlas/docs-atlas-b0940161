@@ -1,0 +1,190 @@
+---
+title: 'Order'
+description: 'Domain model representing a customer order in the kitchen system'
+---
+
+## Overview
+
+The `Order` class is the root aggregate in the FoodTech Kitchen domain model. It represents a customer order from a specific table and contains all products requested. Orders are immutable once created and serve as the starting point for task distribution to kitchen stations.
+
+<Note>
+  Orders follow the **Aggregate Root** pattern in Domain-Driven Design, ensuring all product modifications go through the Order entity.
+</Note>
+
+## Class Definition
+
+```java
+package com.foodtech.kitchen.domain.model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class Order {
+    private final Long id;
+    private final String tableNumber;
+    private final List<Product> products;
+
+    public Order(String tableNumber, List<Product> products) {
+        validate(tableNumber, products);
+        this.id = null;
+        this.tableNumber = tableNumber;
+        this.products = new ArrayList<>(products);
+    }
+}
+```
+
+## Fields
+
+<ParamField path="id" type="Long">
+  Unique identifier for the order. Set to `null` on creation and assigned by the persistence layer.
+</ParamField>
+
+<ParamField path="tableNumber" type="String" required>
+  The table number where the order was placed. Cannot be null or empty.
+</ParamField>
+
+<ParamField path="products" type="List<Product>" required>
+  List of products included in this order. Must contain at least one product. The list is defensively copied to ensure immutability.
+</ParamField>
+
+## Constructors
+
+### Public Constructor
+
+```java
+public Order(String tableNumber, List<Product> products)
+```
+
+Creates a new Order without an ID (for new orders before persistence).
+
+**Parameters:**
+- `tableNumber` - The table number (required, cannot be null or empty)
+- `products` - List of products to include (required, cannot be null or empty)
+
+**Throws:**
+- `IllegalArgumentException` if tableNumber is null/empty
+- `IllegalArgumentException` if products list is null/empty
+
+<Warning>
+  The products list is defensively copied. Changes to the original list after construction will not affect the Order.
+</Warning>
+
+### Reconstruction Factory Method
+
+```java
+public static Order reconstruct(Long id, String tableNumber, List<Product> products)
+```
+
+Reconstructs an existing Order from persistence with its ID.
+
+**Parameters:**
+- `id` - The order ID (required, cannot be null)
+- `tableNumber` - The table number
+- `products` - List of products
+
+**Throws:**
+- `IllegalArgumentException` if ID is null
+- `IllegalArgumentException` if validation fails
+
+<Tip>
+  Use this factory method when loading orders from the database to maintain domain model integrity.
+</Tip>
+
+## Validation Rules
+
+The Order class enforces the following business rules:
+
+| Rule | Validation | Exception |
+|------|------------|----------|
+| **Table Number** | Cannot be null or empty (after trim) | `IllegalArgumentException` |
+| **Products List** | Cannot be null or empty | `IllegalArgumentException` |
+| **ID on Reconstruction** | Must not be null when reconstructing | `IllegalArgumentException` |
+
+### Validation Implementation
+
+```java
+private void validate(String tableNumber, List<Product> products) {
+    if (tableNumber == null || tableNumber.trim().isEmpty()) {
+        throw new IllegalArgumentException("Table number cannot be null or empty");
+    }
+    if (products == null || products.isEmpty()) {
+        throw new IllegalArgumentException("Products list cannot be null or empty");
+    }
+}
+
+private static void validateId(Long id){
+    if (id == null) {
+        throw new IllegalArgumentException("ID cannot be null when reconstructing Order");
+    }
+}
+```
+
+## Public Methods
+
+### getId()
+
+```java
+public Long getId()
+```
+
+Returns the order ID, or `null` if the order hasn't been persisted yet.
+
+### getTableNumber()
+
+```java
+public String getTableNumber()
+```
+
+Returns the table number associated with this order.
+
+### getProducts()
+
+```java
+public List<Product> getProducts()
+```
+
+Returns a defensive copy of the products list. Modifications to the returned list will not affect the Order's internal state.
+
+<Note>
+  All getters return either immutable values or defensive copies, ensuring the Order remains immutable after creation.
+</Note>
+
+## Usage Example
+
+```java
+// Creating a new order
+List<Product> products = Arrays.asList(
+    new Product("Caesar Salad", ProductType.COLD_DISH),
+    new Product("Grilled Steak", ProductType.HOT_DISH),
+    new Product("Mojito", ProductType.DRINK)
+);
+
+Order order = new Order("T-15", products);
+
+// Accessing order information
+String table = order.getTableNumber(); // "T-15"
+List<Product> orderProducts = order.getProducts(); // Returns defensive copy
+
+// Reconstructing an order from database
+Order existingOrder = Order.reconstruct(123L, "T-15", products);
+Long orderId = existingOrder.getId(); // 123L
+```
+
+## Design Patterns
+
+<Card title="Immutability Pattern" icon="lock">
+  All fields are `final` and the products list is defensively copied, making Order instances immutable after creation.
+</Card>
+
+<Card title="Factory Method Pattern" icon="industry">
+  The `reconstruct()` static factory method provides a clear way to create orders with IDs from persistence.
+</Card>
+
+<Card title="Defensive Copying" icon="shield">
+  Both constructor and getter create copies of the products list to prevent external modifications.
+</Card>
+
+## Related Models
+
+- [Product](/domain/product) - Products contained in the order
+- [Task](/domain/task) - Tasks generated from orders for each station
