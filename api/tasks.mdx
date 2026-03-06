@@ -50,7 +50,7 @@ Returns an array of task objects:
 <ResponseField name="products" type="array">
   List of products to prepare in this task. Each product has:
   - `name` - Product name
-  - `type` - Product type (BEVERAGE, HOT_FOOD, COLD_FOOD)
+  - `type` - Product type (DRINK, HOT_DISH, COLD_DISH)
 </ResponseField>
 
 <ResponseField name="createdAt" type="string">
@@ -93,11 +93,11 @@ curl http://localhost:8080/api/tasks/station/BAR?status=PENDING
     "products": [
       {
         "name": "Grilled Chicken",
-        "type": "HOT_FOOD"
+        "type": "HOT_DISH"
       },
       {
         "name": "Pasta Carbonara",
-        "type": "HOT_FOOD"
+        "type": "HOT_DISH"
       }
     ],
     "createdAt": "2026-03-06T10:30:45.123",
@@ -113,7 +113,7 @@ curl http://localhost:8080/api/tasks/station/BAR?status=PENDING
     "products": [
       {
         "name": "Steak",
-        "type": "HOT_FOOD"
+        "type": "HOT_DISH"
       }
     ],
     "createdAt": "2026-03-06T10:25:30.456",
@@ -217,7 +217,7 @@ curl -X PATCH http://localhost:8080/api/tasks/1/start
   "products": [
     {
       "name": "Grilled Chicken",
-      "type": "HOT_FOOD"
+      "type": "HOT_DISH"
     }
   ],
   "createdAt": "2026-03-06T10:30:45.123",
@@ -265,9 +265,9 @@ Tasks are automatically assigned to stations based on product types:
 
 | Product Type | Assigned Station |
 |--------------|------------------|
-| `BEVERAGE` | BAR |
-| `HOT_FOOD` | HOT_KITCHEN |
-| `COLD_FOOD` | COLD_KITCHEN |
+| `DRINK` | BAR |
+| `HOT_DISH` | HOT_KITCHEN |
+| `COLD_DISH` | COLD_KITCHEN |
 
 A single order with products for multiple stations will generate one task per station.
 

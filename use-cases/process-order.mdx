@@ -83,9 +83,9 @@ public class ProcessOrderUseCase implements ProcessOrderPort {
 ```java
 // Create an order
 List<Product> products = List.of(
-    new Product("Caesar Salad", ProductType.SALAD),
-    new Product("Grilled Steak", ProductType.MEAT),
-    new Product("Orange Juice", ProductType.BEVERAGE)
+    new Product("Caesar Salad", ProductType.COLD_DISH),
+    new Product("Grilled Steak", ProductType.HOT_DISH),
+    new Product("Orange Juice", ProductType.DRINK)
 );
 
 Order order = new Order("Table-5", products);

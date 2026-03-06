@@ -25,9 +25,9 @@ Creates a new order and automatically generates tasks for each kitchen station b
     
     <ParamField body="type" type="string" required>
       Product type that determines which station will prepare it. Valid values:
-      - `BEVERAGE` - Routed to BAR station
-      - `HOT_FOOD` - Routed to HOT_KITCHEN station
-      - `COLD_FOOD` - Routed to COLD_KITCHEN station
+      - `DRINK` - Routed to BAR station
+      - `HOT_DISH` - Routed to HOT_KITCHEN station
+      - `COLD_DISH` - Routed to COLD_KITCHEN station
     </ParamField>
   </Expandable>
 </ParamField>
@@ -56,15 +56,15 @@ curl -X POST http://localhost:8080/api/orders \
     "products": [
       {
         "name": "Caesar Salad",
-        "type": "COLD_FOOD"
+        "type": "COLD_DISH"
       },
       {
         "name": "Grilled Chicken",
-        "type": "HOT_FOOD"
+        "type": "HOT_DISH"
       },
       {
         "name": "Coffee",
-        "type": "BEVERAGE"
+        "type": "DRINK"
       }
     ]
   }'
@@ -183,6 +183,6 @@ Each task is initially in `PENDING` status and must be started by a kitchen stat
 
 | Product Type | Station | Example Products |
 |--------------|---------|------------------|
-| `BEVERAGE` | BAR | Coffee, Tea, Juice, Cocktails |
-| `HOT_FOOD` | HOT_KITCHEN | Grilled items, Pasta, Steak |
-| `COLD_FOOD` | COLD_KITCHEN | Salads, Desserts, Cold appetizers |
+| `DRINK` | BAR | Coffee, Tea, Juice, Cocktails |
+| `HOT_DISH` | HOT_KITCHEN | Grilled items, Pasta, Steak |
+| `COLD_DISH` | COLD_KITCHEN | Salads, Desserts, Cold appetizers |
