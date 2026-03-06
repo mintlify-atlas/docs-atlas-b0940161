@@ -1,0 +1,102 @@
+{
+  "projectType": "api-service",
+  "projectName": "FoodTech Kitchen Service",
+  "projectDescription": "A kitchen order management system that decomposes restaurant orders into station-specific preparation tasks using hexagonal architecture and the Command Pattern.",
+  "theme": "aspen",
+  "primaryColor": "#FF6B35",
+  "lightColor": "#FFB088",
+  "darkColor": "#C44E28",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Architecture",
+            "pages": [
+              "architecture/overview",
+              "architecture/hexagonal",
+              "architecture/command-pattern",
+              "architecture/layers"
+            ]
+          },
+          {
+            "group": "Domain Model",
+            "pages": [
+              "domain/order",
+              "domain/task",
+              "domain/product",
+              "domain/stations"
+            ]
+          },
+          {
+            "group": "Use Cases",
+            "pages": [
+              "use-cases/process-order",
+              "use-cases/get-order-status",
+              "use-cases/get-tasks-by-station",
+              "use-cases/start-task"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/running-locally",
+              "guides/docker",
+              "guides/testing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/overview",
+              "api/orders",
+              "api/tasks"
+            ]
+          },
+          {
+            "group": "Models",
+            "pages": [
+              "api/models/order-request",
+              "api/models/order-response",
+              "api/models/task-response"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Hexagonal Architecture with clear separation of concerns",
+    "Command Pattern implementation for station-specific task execution",
+    "Automatic order decomposition into station tasks (Bar, Hot Kitchen, Cold Kitchen)",
+    "RESTful API for order processing and status tracking",
+    "SOLID principles and TDD approach with comprehensive test coverage",
+    "Docker containerization with multi-stage builds",
+    "Spring Boot 3.2 with JPA persistence"
+  ],
+  "publicApiSurface": [
+    "POST /api/orders - Create and process a new order",
+    "GET /api/orders/{orderId}/status - Get order status",
+    "GET /api/tasks - Get all tasks",
+    "GET /api/tasks/station/{station} - Get tasks by station",
+    "POST /api/tasks/{taskId}/start - Start task preparation",
+    "ProcessOrderPort - Process order use case interface",
+    "GetOrderStatusPort - Get order status use case interface",
+    "GetTasksByStationPort - Get tasks by station use case interface",
+    "StartTaskPreparationPort - Start task preparation use case interface"
+  ]
+}
